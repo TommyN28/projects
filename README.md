@@ -1,2 +1,2 @@
-# simple-calculator
-Simple personal project that demonstrates a simple 2-variable calculator
+# Projects
+Repository containing various projects I have worked on both in-class and outside of class.
