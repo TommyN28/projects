@@ -40,7 +40,7 @@ void Math::UserInt()
          << " with only one or two variables.\n";
    cout << "Please select a command: \n";
    cout << "1. Exponent\n"
-         << "2) Add\n"
+         << "2. Add\n"
          << "3. Subtract\n"
          << "4. Divide\n"
          << "5. Multiply\n"
@@ -94,7 +94,7 @@ void Math::UserInt()
       
       cout << "Please select a command: \n";
       cout << "1. Exponent\n"
-         << "2) Add\n"
+         << "2. Add\n"
          << "3. Subtract\n"
          << "4. Divide\n"
          << "5. Multiply\n"
