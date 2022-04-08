@@ -4,3 +4,5 @@ sorting algorithmn. The program will create an array of randomly generated integ
 prompted to enter an integer value for the size of the array, and an integer range for the array values to be randomly generated to. The user will then be prompted to
 enter their choice for which sorting method to use, binary merge sort or 3-way merge sort. From there, the program will sort the array in **descending** order. Finally,
 the sorted array and original unsorted array will be written to a text file called "sorted.txt" and "unsorted.txt" respectively.
+
+This program was coded in C++ utilizing object-oriented programming techniques. This program was designed, developed, and compiled in the free online IDE OnlineGDB.
