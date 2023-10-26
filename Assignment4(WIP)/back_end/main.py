@@ -13,12 +13,13 @@ players: Dict[str, Player] = {}
 history: List[Player] = []
 
 def find_player(id):
-    for i in range(len(players)):
-        if id == players[i]:
-            return players[i]
+    if id in players:
+        return players[id]
+    players[id] = Player(id)
+    return players[id]
 
 def update(payload: Mapping[str, Any]) -> Mapping[str, Any]:
-    
+    print(f'update was called with {payload}')
     action = payload["action"]
     if action == "userclicked":
         player = find_player(payload["id"])
@@ -32,16 +33,16 @@ def update(payload: Mapping[str, Any]) -> Mapping[str, Any]:
         player = find_player(payload["id"])
         remaining_history = history[player.what_i_know:]
         player.what_i_know = len(history)
-        updates = List[Dict[str, int, int]] = []
+        updates: List[List[str, int, int]] = []
         for i in range(len(remaining_history)):
             player = remaining_history[i]
             updates.append({"id":player.id, "x":player.x, "y":player.y})
         return {
             "updates": updates
         }
-    # else:
-    #     raise ValueError("Bad action")
-    print(f'update was called with {payload}')
+    else:
+        raise ValueError("Bad action")
+    
     
     
 
