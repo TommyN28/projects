@@ -3,6 +3,64 @@ interface OnClickHandler
 	(x:number, y:number): void;
 }
 
+
+interface HttpPostCallback {
+	(x:any): any;
+}
+
+const random_id = (len:number) => {
+    let p = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    return [...Array(len)].reduce(a => a + p[Math.floor(Math.random() * p.length)], '');
+}
+
+const g_origin = new URL(window.location.href).origin;
+const g_id = random_id(12);
+
+// Payload is a marshaled (but not JSON-stringified) object
+// A JSON-parsed response object will be passed to the callback
+const httpPost = (page_name: string, payload: any, callback: HttpPostCallback) => {
+	let request = new XMLHttpRequest();
+	request.onreadystatechange = () => {
+		if(request.readyState === 4)
+		{
+			if(request.status === 200) {
+				let response_obj;
+				try {
+					response_obj = JSON.parse(request.responseText);
+				} catch(err) {}
+				if (response_obj) {
+					callback(response_obj);
+				} else {
+					callback({
+						status: 'error',
+						message: 'response is not valid JSON',
+						response: request.responseText,
+					});
+				}
+			} else {
+				if(request.status === 0 && request.statusText.length === 0) {
+					callback({
+						status: 'error',
+						message: 'connection failed',
+					});
+				} else {
+					callback({
+						status: 'error',
+						message: `server returned status ${request.status}: ${request.statusText}`,
+					});
+				}
+			}
+		}
+	};
+	request.open('post', `${g_origin}/${page_name}`, true);
+	request.setRequestHeader('Content-Type', 'application/json');
+	request.send(JSON.stringify(payload));
+}
+
+
+
+
+
 class Sprite 
 {
 	x:number;
@@ -68,11 +126,7 @@ class Sprite
 
 let id_to_sprite: Record<string, Sprite> =  {}
 
-// add to mapping
-// id_to_sprite[id] = sprite;
 
-// reading from mapping
-// sprite = id_to_sprite[id];
 
 
 
@@ -82,14 +136,17 @@ let id_to_sprite: Record<string, Sprite> =  {}
 class Model 
 {
 	sprites:Sprite[] = [];
-	turtle = new Sprite(50, 50, "turtle.png", Sprite.prototype.go_toward_destination, Sprite.prototype.set_destination);
+	turtle:Sprite;
+	
 
 	constructor() 
 	{
 		
 		this.sprites.push(new Sprite(200, 100, "lettuce.png", Sprite.prototype.sit_still, Sprite.prototype.ignore_click));
+		this.turtle = new Sprite(50, 50, "blue_robot.png", Sprite.prototype.go_toward_destination, Sprite.prototype.set_destination);
 		
 		this.sprites.push(this.turtle);
+		id_to_sprite[g_id] = this.turtle;
 	}
 
 	update() 
@@ -101,9 +158,10 @@ class Model
 
 	onclick(x:number, y:number) 
 	{
-		for (const sprite of this.sprites) {
-			sprite.onclick(x, y);
-		}
+		// for (const sprite of this.sprites) {
+		// 	sprite.onclick(x, y);
+		// }
+		this.turtle.onclick(x,y);
 	}
 
 	move(dx:number, dy:number) 
@@ -124,7 +182,7 @@ class View
 	{
 		this.model = model;
 		let turtle = new Image();
-		turtle.src = "turtle.png";
+		turtle.src = "blue_robot.png";
 	}
 
 	update() 
@@ -137,58 +195,7 @@ class View
 	}
 }
 
-interface HttpPostCallback {
-	(x:any): any;
-}
 
-const random_id = (len:number) => {
-    let p = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    return [...Array(len)].reduce(a => a + p[Math.floor(Math.random() * p.length)], '');
-}
-
-const g_origin = new URL(window.location.href).origin;
-const g_id = random_id(12);
-
-// Payload is a marshaled (but not JSON-stringified) object
-// A JSON-parsed response object will be passed to the callback
-const httpPost = (page_name: string, payload: any, callback: HttpPostCallback) => {
-	let request = new XMLHttpRequest();
-	request.onreadystatechange = () => {
-		if(request.readyState === 4)
-		{
-			if(request.status === 200) {
-				let response_obj;
-				try {
-					response_obj = JSON.parse(request.responseText);
-				} catch(err) {}
-				if (response_obj) {
-					callback(response_obj);
-				} else {
-					callback({
-						status: 'error',
-						message: 'response is not valid JSON',
-						response: request.responseText,
-					});
-				}
-			} else {
-				if(request.status === 0 && request.statusText.length === 0) {
-					callback({
-						status: 'error',
-						message: 'connection failed',
-					});
-				} else {
-					callback({
-						status: 'error',
-						message: `server returned status ${request.status}: ${request.statusText}`,
-					});
-				}
-			}
-		}
-	};
-	request.open('post', `${g_origin}/${page_name}`, true);
-	request.setRequestHeader('Content-Type', 'application/json');
-	request.send(JSON.stringify(payload));
-}
 
 
 
@@ -220,9 +227,9 @@ class Controller
 		const y = event.pageY - this.view.canvas.offsetTop;
 		this.model.onclick(x, y);
 
-		httpPost('ajax.html', {
+		httpPost('radio', {
 			id: g_id,
-			action: 'move',
+			action: 'userclicked',
 			x: x,
 			y: y,
 		}, this.onAcknowledgeClick);
@@ -252,17 +259,35 @@ class Controller
 	{
 		console.log(`ob = ${JSON.stringify(ob)}`);
 		//ob = {"updates": [["id" , x, posY], ["id" , posX, posY], ["id" , posX, posY]]}
-		// for (let i = 0; i < ob.updates.length; i++)
-		// {
-		// 	let update = ob.updates [i];
-		// 	let id = update.id;
-		// 	let x = update.x;
-		// 	let y = update.y;
+		for (let i = 0; i < ob.updates.length; i++)
+		{
+			let update = ob.updates [i];
+			let id = update.id;
+			let x = update.x;
+			let y = update.y;
 
-		// 	// find the sprite with id "id"
-		// 	// (if there isnt one, make one)
-		// 	// sprite.setDestination (x,y);
-		// }
+
+			let s = id_to_sprite[id];
+			if (s === undefined) {
+				s = new Sprite(x, y, "green_robot.png", Sprite.prototype.go_toward_destination, Sprite.prototype.ignore_click);
+				id_to_sprite[id] = s;
+				this.model.sprites.push(s);
+			}
+			s.set_destination(x, y);
+			
+
+			// find the sprite with id "id"
+			// (if there isnt one, make one)
+			// sprite.setDestination (x,y);
+
+			// add to mapping
+			// id_to_sprite[id] = sprite;
+
+			// reading from mapping
+			// sprite = id_to_sprite[id];
+			
+			
+		}
 	}
 
 	request_update()
@@ -270,6 +295,7 @@ class Controller
 		let payload =
 		{
 			action: "needupdate",
+			id: g_id
 		}
 		httpPost("radio", payload, (ob) => this.on_receive_updates(ob));
 	}
