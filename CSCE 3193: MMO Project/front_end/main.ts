@@ -255,7 +255,7 @@ class Controller
 		console.log(`Response to move: ${JSON.stringify(ob)}`);
 	}
 
-	on_receive_updates(ob)
+	on_receive_updates(ob: any)
 	{
 		console.log(`ob = ${JSON.stringify(ob)}`);
 		//ob = {"updates": [["id" , x, posY], ["id" , posX, posY], ["id" , posX, posY]]}
